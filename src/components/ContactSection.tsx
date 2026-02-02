@@ -11,19 +11,44 @@ const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission (frontend-only for now)
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast({
-        title: "Message received!",
-        description: "Thank you for reaching out. I'll get back to you soon.",
+    const formData = new FormData(e.currentTarget);
+    // Convert FormData to a plain object for the JSON body
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch("https://formsubmit.co/ajax/vk133162@gmail.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(data)
       });
-      (e.target as HTMLFormElement).reset();
-    }, 1500);
+
+      const result = await response.json();
+
+      if (response.ok && result.success === "true") {
+        toast({
+          title: "Message Sent!",
+          description: "Thank you for reaching out. I'll get back to you soon.",
+        });
+        (e.target as HTMLFormElement).reset();
+      } else {
+        throw new Error("Failed to send");
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Oops!",
+        description: "Something went wrong. Please try again or email me directly at vk133162@gmail.com",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

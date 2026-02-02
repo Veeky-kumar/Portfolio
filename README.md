@@ -1,73 +1,50 @@
-# Welcome to your Lovable project
+# Veeky Kumar - AI Engineer & Software Developer Portfolio
 
-## Project info
+A premium, interactive AI-themed portfolio built to showcase expertise in Generative AI, RAG pipelines, and Full-Stack Development.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Key Features
 
-## How can I edit this code?
+-   **AI-Driven Hero Section**: Interactive background particles and glowing core animations.
+-   **Global Theme Customizer**: Real-time accent color switching (Orange, Cyber Blue, Emerald Green, Neon Purple, Crimson) with localStorage persistence.
+-   **Admin Panel**: Managed dashboard for projects and skills (Password protected, strictly for portfolio management).
+-   **Project Showcase**: Detailed cards for AI and Web projects with live links and GitHub integration.
+-   **Experience & Education**: Professional timeline and academic background with visual depth.
+-   **Achievements Gallery**: Featured certifications (IIT Kharagpur, DeepLearning.AI) with credential verification.
+-   **Responsive Design**: Optimized for all screen sizes from mobile to wide monitors.
 
-There are several ways of editing your application.
+## 🛠️ Technology Stack
 
-**Use Lovable**
+-   **Frontend**: React, TypeScript, Vite
+-   **Styling**: Tailwind CSS, Framer Motion (Animations)
+-   **UI Components**: shadcn-ui, Lucide Icons
+-   **State Management**: React Context API
+-   **Deployment Readiness**: Clean architecture ready for Vercel or Netlify.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 📦 Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+1.  **Clone the repository**
+    ```sh
+    git clone https://github.com/Veeky-kumar/portfolio.git
+    ```
 
-**Use your preferred IDE**
+2.  **Install dependencies**
+    ```sh
+    npm install
+    ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3.  **Run in development mode**
+    ```sh
+    npm run dev
+    ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+4.  **Build for production**
+    ```sh
+    npm run build
+    ```
 
-Follow these steps:
+## 🔐 Admin Panel
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Access the hidden admin panel to update your projects and skills in real-time. Changes are stored in local state/storage for demonstration purposes and can be integrated with a backend like Firebase or Supabase.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+Created with 🧡 by Veeky Kumar

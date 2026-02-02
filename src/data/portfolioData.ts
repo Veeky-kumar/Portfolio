@@ -2,7 +2,7 @@
 
 export interface Skill {
   name: string;
-  category: 'programming' | 'ai-ml' | 'vector-search' | 'backend' | 'frontend' | 'devops';
+  category: string;
 }
 
 export interface Project {
@@ -13,6 +13,7 @@ export interface Project {
   technologies: string[];
   githubUrl?: string;
   liveUrl?: string;
+  image: string;
 }
 
 export interface Education {
@@ -36,6 +37,23 @@ export interface Experience {
   responsibilities: string[];
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  issuer: string;
+  date: string;
+  image: string;
+  link?: string;
+  category: 'hackathon' | 'certification' | 'award';
+}
+
+import projectLlm from "@/assets/project-llm.png";
+import projectResume from "@/assets/project-resume.png";
+import projectDiabetes from "@/assets/project-diabetes.png";
+import projectKdsh from "@/assets/project-kdsh.jpg";
+import certHackathon from "@/assets/cert-hackathon.png";
+import certTensorFlow from "@/assets/cert-tensorflow.png";
+
 // Personal Details
 export const personalDetails = {
   name: "Veeky Kumar",
@@ -46,10 +64,11 @@ export const personalDetails = {
   github: "https://github.com/Veeky-kumar",
   leetcode: "https://leetcode.com/u/Veeky_kumar/",
   resumePath: "/VeekyResume.pdf",
+  videoIntroUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Default/Placeholder video URL
 };
 
 // Skills - Add new skills here
-export const skills: Skill[] = [
+export const initialSkills: Skill[] = [
   // Programming
   { name: "Python", category: "programming" },
   { name: "SQL", category: "programming" },
@@ -57,7 +76,7 @@ export const skills: Skill[] = [
   { name: "JavaScript", category: "programming" },
   { name: "TypeScript", category: "programming" },
   
-  // AI / ML
+  // AI / ML (Including Vector Search)
   { name: "NLP", category: "ai-ml" },
   { name: "LLMs", category: "ai-ml" },
   { name: "RAG", category: "ai-ml" },
@@ -65,12 +84,10 @@ export const skills: Skill[] = [
   { name: "Hugging Face", category: "ai-ml" },
   { name: "PyTorch", category: "ai-ml" },
   { name: "TensorFlow", category: "ai-ml" },
-  
-  // Vector Search
-  { name: "FAISS", category: "vector-search" },
-  { name: "Pinecone", category: "vector-search" },
-  { name: "Embeddings", category: "vector-search" },
-  { name: "Semantic Similarity", category: "vector-search" },
+  { name: "FAISS", category: "ai-ml" },
+  { name: "Pinecone", category: "ai-ml" },
+  { name: "Embeddings", category: "ai-ml" },
+  { name: "Semantic Similarity", category: "ai-ml" },
   
   // Backend
   { name: "FastAPI", category: "backend" },
@@ -97,7 +114,7 @@ export const skills: Skill[] = [
 ];
 
 // Projects - Add new projects here
-export const projects: Project[] = [
+export const initialProjects: Project[] = [
   {
     id: "long-context-llm",
     title: "Narrative Consistency Verification for Long-Context LLMs",
@@ -105,6 +122,7 @@ export const projects: Project[] = [
     description: "Designed a long-context LLM reasoning system for narratives exceeding 100k+ words using evidence-grounded semantic retrieval and consistency scoring.",
     technologies: ["Python", "NLP", "Sentence Transformers", "Semantic Search", "Ollama"],
     githubUrl: "https://github.com/Veeky-kumar/long-context-reasoning-system-",
+    image: projectKdsh,
   },
   {
     id: "resume-matching",
@@ -113,6 +131,7 @@ export const projects: Project[] = [
     technologies: ["Python", "FastAPI", "React", "FAISS", "RAG"],
     githubUrl: "https://github.com/Veeky-kumar/interviewAI",
     liveUrl: "https://interview-ai-drab.vercel.app/",
+    image: projectResume,
   },
   {
     id: "diabetes-prediction",
@@ -120,6 +139,7 @@ export const projects: Project[] = [
     description: "Developed a complete ML pipeline including preprocessing, model training, inference, and deployment.",
     technologies: ["Python", "Random Forest", "FastAPI", "React", "Docker"],
     liveUrl: "https://diabetes-prediction-frontend-delta.vercel.app/",
+    image: projectDiabetes,
   },
 ];
 
@@ -142,6 +162,7 @@ export const education: Education[] = [
     degree: "Bachelor of Engineering",
     field: "Computer Science & Engineering",
     duration: "2020 – 2024",
+    cgpa: "7.75 / 10",
     location: "Mohali, India",
     backgroundImage: "chandigarh-university",
     highlights: ["Data Structures", "Algorithms", "Software Engineering", "Database Systems"],
@@ -170,11 +191,31 @@ export const experience: Experience[] = [
 export const skillCategories = [
   { key: "programming", label: "Programming" },
   { key: "ai-ml", label: "AI / ML" },
-  { key: "vector-search", label: "Vector Search" },
   { key: "backend", label: "Backend" },
   { key: "frontend", label: "Frontend" },
   { key: "devops", label: "DevOps / Tools" },
 ] as const;
+
+// Achievements - Add your certificates and hackathon wins here
+export const initialAchievements: Achievement[] = [
+  {
+    id: "kdsh-2024",
+    title: "Kharagpur Data Science Hackathon (Round 1)",
+    issuer: "IIT Kharagpur",
+    date: "2024",
+    image: certHackathon,
+    category: "hackathon"
+  },
+  {
+    id: "tensorflow-cert",
+    title: "Introduction to TensorFlow for AI, ML, and Deep Learning",
+    issuer: "DeepLearning.AI (Coursera)",
+    date: "2021",
+    image: certTensorFlow,
+    category: "certification",
+    link: "https://www.coursera.org/verify/28EF8DEXL26C"
+  }
+];
 
 // About me text
 export const aboutMe = {
