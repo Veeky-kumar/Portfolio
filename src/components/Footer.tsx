@@ -1,8 +1,10 @@
 import { Github, Linkedin, Mail, Code, FileText, Download } from "lucide-react";
 import { personalDetails } from "@/data/portfolioData";
+import { usePortfolio } from "@/data/PortfolioContext";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { resumeUrl, resumeDownloadUrl } = usePortfolio();
 
   return (
     <footer className="py-8 sm:py-12 border-t border-border">
@@ -22,7 +24,7 @@ const Footer = () => {
           {/* Resume Links */}
           <div className="flex items-center gap-3 sm:gap-4">
             <a
-              href={personalDetails.resumePath}
+              href={resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs sm:text-sm"
@@ -31,7 +33,7 @@ const Footer = () => {
               View Resume
             </a>
             <a
-              href={personalDetails.resumePath}
+              href={resumeDownloadUrl || resumeUrl}
               download="VeekyKumar_Resume.pdf"
               className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors text-xs sm:text-sm"
             >

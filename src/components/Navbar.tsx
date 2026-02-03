@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { personalDetails } from "@/data/portfolioData";
+import { usePortfolio } from "@/data/PortfolioContext";
 
 const navLinks = [
   { href: "#home", label: "Home" },
@@ -13,19 +14,44 @@ const navLinks = [
 ];
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const { resumeUrl, resumeDownloadUrl } = usePortfolio();
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    if (isMobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <motion.nav
+      ref={menuRef}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -65,7 +91,7 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-3">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button size="sm" variant="outline" asChild className="rounded-full border-primary/30 hover:bg-primary/10 text-primary px-5">
-                <a href={personalDetails.resumePath} target="_blank" rel="noopener noreferrer">
+                <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
                   <FileText className="w-4 h-4 mr-2" />
                   View
                 </a>
@@ -73,7 +99,7 @@ const Navbar = () => {
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button size="sm" asChild className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-5 shadow-lg shadow-primary/20">
-                <a href={personalDetails.resumePath} download="VeekyKumar_Resume.pdf">
+                <a href={resumeDownloadUrl || resumeUrl} download="VeekyKumar_Resume.pdf">
                   <Download className="w-4 h-4 mr-2" />
                   Download
                 </a>
@@ -114,7 +140,7 @@ const Navbar = () => {
                 ))}
                 <div className="pt-6 border-t border-white/5">
                   <Button size="lg" asChild className="w-full rounded-2xl bg-primary">
-                    <a href={personalDetails.resumePath} target="_blank" rel="noopener noreferrer">
+                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
                       View Full Resume
                     </a>
                   </Button>

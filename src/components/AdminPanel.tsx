@@ -1,35 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Settings2, Trash2, Pencil, LayoutGrid, BrainCircuit, Type, Link as LinkIcon, Image as ImageIcon, Video } from "lucide-react";
+import { Plus, X, Settings2, Trash2, Pencil, LayoutGrid, BrainCircuit, Type, Link as LinkIcon, Image as ImageIcon, Video, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { usePortfolio } from "@/data/PortfolioContext";
-import { Project, Skill, skillCategories } from "@/data/portfolioData";
+import { Project, Skill, Achievement, skillCategories } from "@/data/portfolioData";
+import { Award, Trophy, Medal, ExternalLink, Calendar, User, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminPanel = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [activeTab, setActiveTab] = useState<"project" | "skill" | "video">("project");
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [passwordInput, setPasswordInput] = React.useState("");
+  const [activeTab, setActiveTab] = React.useState<"project" | "skill" | "honors" | "settings">("project");
   
   const { 
     projects, 
     skills, 
+    achievements,
     addProject, 
     deleteProject, 
     updateProject,
     addSkill, 
     deleteSkill, 
+    addAchievement,
+    deleteAchievement,
+    updateAchievement,
     updateVideoUrl, 
     videoUrl,
+    resumeUrl,
+    resumeDownloadUrl,
+    updateResumeLinks,
     showVideo,
     setShowVideo,
     categories,
     addCategory
   } = usePortfolio();
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setShowAuthModal(false);
+      }
+    };
+    if (isOpen || showAuthModal) {
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, showAuthModal]);
 
   const handleOpenAttempt = () => {
     if (!isAuthenticated) {
@@ -53,7 +74,7 @@ const AdminPanel = () => {
   };
 
   // Project Form State
-  const [projectForm, setProjectForm] = useState({
+  const [projectForm, setProjectForm] = React.useState({
     title: "",
     description: "",
     technologies: "",
@@ -63,22 +84,37 @@ const AdminPanel = () => {
     image: "", // Empty for fallback
   });
 
-  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(null);
 
   // Skill Form State
-  const [skillForm, setSkillForm] = useState({
+  const [skillForm, setSkillForm] = React.useState({
     name: "",
     category: categories[0]?.key || "programming",
   });
 
   // New Category Form State
-  const [categoryForm, setCategoryForm] = useState({
+  const [categoryForm, setCategoryForm] = React.useState({
     key: "",
     label: "",
   });
 
-  // Video Form State
-  const [newVideoUrl, setNewVideoUrl] = useState(videoUrl);
+  // Achievement Form State
+  const [achievementForm, setAchievementForm] = React.useState({
+    title: "",
+    issuer: "",
+    date: "",
+    description: "",
+    image: "",
+    link: "",
+    category: "certification" as Achievement["category"],
+  });
+
+  const [editingAchievementId, setEditingAchievementId] = React.useState<string | null>(null);
+
+  // Settings Form State
+  const [newVideoUrl, setNewVideoUrl] = React.useState(videoUrl);
+  const [newResumeUrl, setNewResumeUrl] = React.useState(resumeUrl);
+  const [newResumeDownloadUrl, setNewResumeDownloadUrl] = React.useState(resumeDownloadUrl);
 
   const handleAddProject = (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,10 +182,65 @@ const AdminPanel = () => {
     toast.success("Skill added successfully!");
   };
 
-  const handleUpdateVideo = (e: React.FormEvent) => {
+  const handleUpdateSettings = (e: React.FormEvent) => {
     e.preventDefault();
     updateVideoUrl(newVideoUrl);
-    toast.success("Video URL updated!");
+    updateResumeLinks(newResumeUrl, newResumeDownloadUrl);
+    toast.success("Profile settings updated!");
+  };
+
+  const handleAddAchievement = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const fallbackImage = "https://images.unsplash.com/photo-1523240715639-93f8fdad4e65?auto=format&fit=crop&q=80&w=800";
+    const imageUrl = achievementForm.image.trim() || fallbackImage;
+
+    if (editingAchievementId) {
+      updateAchievement({
+        id: editingAchievementId,
+        title: achievementForm.title,
+        issuer: achievementForm.issuer,
+        date: achievementForm.date,
+        description: achievementForm.description,
+        image: imageUrl,
+        link: achievementForm.link,
+        category: achievementForm.category,
+      });
+      setEditingAchievementId(null);
+      toast.success("Achievement updated successfully!");
+    } else {
+      const newAchievement: Achievement = {
+        id: Date.now().toString(),
+        title: achievementForm.title,
+        issuer: achievementForm.issuer,
+        date: achievementForm.date,
+        description: achievementForm.description,
+        image: imageUrl,
+        link: achievementForm.link,
+        category: achievementForm.category,
+      };
+      addAchievement(newAchievement);
+      toast.success("Achievement added successfully!");
+    }
+    setAchievementForm({ title: "", issuer: "", date: "", description: "", image: "", link: "", category: "certification" });
+  };
+
+  const handleEditAchievement = (achievement: Achievement) => {
+    setAchievementForm({
+      title: achievement.title,
+      issuer: achievement.issuer,
+      date: achievement.date,
+      description: achievement.description || "",
+      image: achievement.image,
+      link: achievement.link || "",
+      category: achievement.category,
+    });
+    setEditingAchievementId(achievement.id);
+  };
+
+  const cancelAchievementEdit = () => {
+    setEditingAchievementId(null);
+    setAchievementForm({ title: "", issuer: "", date: "", description: "", image: "", link: "", category: "certification" });
   };
 
   const handleAddCategory = (e: React.FormEvent) => {
@@ -177,19 +268,19 @@ const AdminPanel = () => {
       <AnimatePresence>
         {/* Auth Modal */}
         {showAuthModal && (
-          <>
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAuthModal(false)}
-              className="fixed inset-0 bg-background/80 backdrop-blur-md z-[110]"
+              className="absolute inset-0 bg-background/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] max-w-[90vw] bg-card border border-border p-8 rounded-3xl shadow-2xl z-[120] text-center"
+              className="relative w-full max-w-[350px] bg-card border border-border p-8 rounded-3xl shadow-2xl text-center"
             >
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <Settings2 className="w-8 h-8 text-primary" />
@@ -224,24 +315,24 @@ const AdminPanel = () => {
                 </div>
               </form>
             </motion.div>
-          </>
+          </div>
         )}
 
         {/* Admin Panel Modal */}
         {isOpen && (
-          <>
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[110]"
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed bottom-24 right-6 w-[400px] max-w-[90vw] bg-card border border-border rounded-3xl shadow-2xl z-[120] overflow-hidden flex flex-col"
+              className="relative w-full max-w-[450px] h-[85vh] max-h-[700px] bg-card border border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col"
             >
               <div className="p-6 border-b border-border flex items-center justify-between bg-secondary/20 shrink-0">
                 <div className="flex items-center gap-2">
@@ -254,7 +345,7 @@ const AdminPanel = () => {
               </div>
 
               <div className="flex p-2 gap-1 bg-secondary/10 shrink-0">
-                {(["project", "skill", "video"] as const).map((tab) => (
+                {(["project", "skill", "honors", "settings"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -458,26 +549,220 @@ const AdminPanel = () => {
                   </div>
                 )}
 
-                {activeTab === "video" && (
-                  <div className="space-y-6">
-                    <form onSubmit={handleUpdateVideo} className="space-y-4">
+                {activeTab === "honors" && (
+                  <div className="space-y-8">
+                    <div className="flex flex-col items-center justify-center text-center space-y-2">
+                      <h4 className="text-[10px] uppercase font-black text-primary tracking-widest">
+                        {editingAchievementId ? "Edit Honor" : "Add New Honor/Cert"}
+                      </h4>
+                      {editingAchievementId && (
+                        <button 
+                          onClick={cancelAchievementEdit}
+                          className="text-[10px] font-bold text-destructive hover:underline"
+                        >
+                          Cancel Editing
+                        </button>
+                      )}
+                    </div>
+                    <form onSubmit={handleAddAchievement} className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Title</label>
+                        <Input 
+                          placeholder="e.g. TensorFlow Developer Certificate" 
+                          value={achievementForm.title} 
+                          onChange={e => setAchievementForm({...achievementForm, title: e.target.value})}
+                          required
+                          className="bg-secondary/30 rounded-xl h-9 text-xs"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Issuer</label>
+                          <Input 
+                            placeholder="e.g. Google" 
+                            value={achievementForm.issuer} 
+                            onChange={e => setAchievementForm({...achievementForm, issuer: e.target.value})}
+                            required
+                            className="bg-secondary/30 rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Date</label>
+                          <Input 
+                            placeholder="e.g. 2024" 
+                            value={achievementForm.date} 
+                            onChange={e => setAchievementForm({...achievementForm, date: e.target.value})}
+                            required
+                            className="bg-secondary/30 rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Category</label>
+                          <select 
+                            className="w-full bg-secondary/30 rounded-xl border border-input h-9 px-3 text-xs outline-none focus:border-primary transition-colors cursor-pointer"
+                            value={achievementForm.category}
+                            onChange={e => setAchievementForm({...achievementForm, category: e.target.value as Achievement["category"]})}
+                          >
+                            <option value="certification">Certification</option>
+                            <option value="hackathon">Hackathon</option>
+                            <option value="award">Award</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Image/PDF Preview</label>
+                          <div className="w-full h-9 rounded-xl border border-white/5 bg-black/20 overflow-hidden flex items-center justify-center">
+                            {achievementForm.image ? (
+                              achievementForm.image.includes('drive.google.com') ? (
+                                <div className="flex items-center gap-2 text-[10px] text-blue-400 font-bold uppercase tracking-tighter">
+                                  <Video className="w-3 h-3" /> PDF File
+                                </div>
+                              ) : (
+                                <img 
+                                  src={achievementForm.image} 
+                                  alt="Preview" 
+                                  className="h-full w-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-muted-foreground/30" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Description</label>
+                        <Textarea 
+                          placeholder="Briefly describe this honor..." 
+                          value={achievementForm.description} 
+                          onChange={e => setAchievementForm({...achievementForm, description: e.target.value})}
+                          className="bg-secondary/30 rounded-xl min-h-[60px] text-xs resize-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between ml-1">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground">Image/PDF URL</label>
+                          {achievementForm.image && (
+                            <a 
+                              href={achievementForm.image} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-[9px] text-primary hover:underline flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2 h-2" /> Open Link
+                            </a>
+                          )}
+                        </div>
+                        <Input 
+                          placeholder="Paste Direct Image Link or Google Drive PDF Link" 
+                          value={achievementForm.image} 
+                          onChange={e => setAchievementForm({...achievementForm, image: e.target.value})}
+                          className="bg-secondary/30 rounded-xl h-9 text-xs"
+                        />
+                        <div className="p-3 mt-2 rounded-xl bg-primary/5 border border-primary/10 text-[9px] text-muted-foreground leading-relaxed">
+                          <p className="font-bold text-primary mb-1 uppercase tracking-tighter">Support Info:</p>
+                          • <span className="text-primary font-bold">Images:</span> Must be direct links (end in .jpg/png/webp). Use <a href="https://postimages.org/" target="_blank" rel="noreferrer" className="text-primary underline font-bold">postimages.org</a> for easy upload (Get the 'Direct Link').<br/>
+                          • <span className="text-blue-400 font-bold">PDFs:</span> Paste your Google Drive link here. We'll show a fallback image and add a <span className="text-blue-400">"View PDF"</span> button automatically.
+                        </div>
+                        {achievementForm.image.startsWith('C:') || achievementForm.image.startsWith('/') ? (
+                          <p className="flex items-center gap-1 text-[9px] text-destructive mt-1 font-bold italic">
+                            <AlertCircle className="w-3 h-3" /> Browsers CANNOT access your local computer files. You MUST use a web URL.
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Verification Link</label>
+                        <Input 
+                          placeholder="Credential URL" 
+                          value={achievementForm.link} 
+                          onChange={e => setAchievementForm({...achievementForm, link: e.target.value})}
+                          className="bg-secondary/30 rounded-xl h-9 text-xs"
+                        />
+                      </div>
+                      <Button type="submit" className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold h-10">
+                        {editingAchievementId ? <><Pencil className="w-4 h-4 mr-2" /> Update Honor</> : <><Plus className="w-4 h-4 mr-2" /> Add Honor</>}
+                      </Button>
+                    </form>
+
+                    <div className="pt-6 border-t border-white/5 space-y-4">
+                      <h4 className="text-[10px] uppercase font-black text-primary tracking-widest">Existing Achievements</h4>
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">YouTube URL</label>
+                        {achievements.map(achievement => (
+                          <div key={achievement.id} className="flex items-center justify-between p-3 rounded-2xl bg-secondary/20 border border-white/5 group">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="w-8 h-8 rounded-lg bg-black/40 flex-shrink-0 overflow-hidden">
+                                <img src={achievement.image} alt="" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="text-[11px] font-bold truncate">{achievement.title}</p>
+                                <p className="text-[9px] text-muted-foreground">{achievement.issuer}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button 
+                                onClick={() => handleEditAchievement(achievement)}
+                                className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button 
+                                onClick={() => deleteAchievement(achievement.id)}
+                                className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "settings" && (
+                  <div className="space-y-6">
+                    <form onSubmit={handleUpdateSettings} className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">YouTube Intro URL</label>
                         <Input 
                           placeholder="https://www.youtube.com/watch?v=..." 
                           value={newVideoUrl} 
                           onChange={e => setNewVideoUrl(e.target.value)}
-                          required
                           className="bg-secondary/30 rounded-xl"
                         />
                       </div>
-                      <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                        <p className="text-[10px] text-muted-foreground italic leading-relaxed">
-                          Currently showing: <span className="text-primary break-all">{videoUrl}</span>
+
+                      <div className="space-y-2 pt-4 border-t border-white/5">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Resume View Link (Drive)</label>
+                        <Input 
+                          placeholder="Google Drive View Link" 
+                          value={newResumeUrl} 
+                          onChange={e => setNewResumeUrl(e.target.value)}
+                          className="bg-secondary/30 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Direct Download Link</label>
+                        <Input 
+                          placeholder="Direct Download URL" 
+                          value={newResumeDownloadUrl} 
+                          onChange={e => setNewResumeDownloadUrl(e.target.value)}
+                          className="bg-secondary/30 rounded-xl"
+                        />
+                        <p className="text-[9px] text-muted-foreground ml-1 italic">
+                          Tip: For Google Drive, use a direct download formatter if you want 'One-Click Download'.
                         </p>
                       </div>
+
                       <Button type="submit" className="w-full rounded-xl bg-primary hover:bg-primary/90 font-bold h-10 shadow-lg shadow-primary/20">
-                        <Video className="w-4 h-4 mr-2" /> Update Intro Video
+                        <Settings2 className="w-4 h-4 mr-2" /> Update All Settings
                       </Button>
                     </form>
 
@@ -495,7 +780,7 @@ const AdminPanel = () => {
                 )}
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </div>

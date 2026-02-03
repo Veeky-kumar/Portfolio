@@ -2,8 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { 
   Project, 
   Skill, 
+  Achievement,
   initialProjects, 
   initialSkills, 
+  initialAchievements,
   personalDetails,
   skillCategories
 } from "./portfolioData";
@@ -11,7 +13,10 @@ import {
 interface PortfolioContextType {
   projects: Project[];
   skills: Skill[];
+  achievements: Achievement[];
   videoUrl: string;
+  resumeUrl: string;
+  resumeDownloadUrl: string;
   showVideo: boolean;
   categories: { key: string; label: string }[];
   addProject: (project: Project) => void;
@@ -19,7 +24,11 @@ interface PortfolioContextType {
   updateProject: (project: Project) => void;
   addSkill: (skill: Skill) => void;
   deleteSkill: (name: string) => void;
+  addAchievement: (achievement: Achievement) => void;
+  deleteAchievement: (id: string) => void;
+  updateAchievement: (achievement: Achievement) => void;
   updateVideoUrl: (url: string) => void;
+  updateResumeLinks: (url: string, downloadUrl: string) => void;
   setShowVideo: (show: boolean) => void;
   addCategory: (category: { key: string; label: string }) => void;
   accentColor: string;
@@ -48,8 +57,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return saved ? JSON.parse(saved) : initialSkills;
   });
 
+  const [achievements, setAchievements] = useState<Achievement[]>(() => {
+    const saved = localStorage.getItem("portfolio_achievements");
+    return saved ? JSON.parse(saved) : initialAchievements;
+  });
+
   const [videoUrl, setVideoUrl] = useState(() => {
     return localStorage.getItem("portfolio_video_url") || personalDetails.videoIntroUrl;
+  });
+
+  const [resumeUrl, setResumeUrl] = useState(() => {
+    return localStorage.getItem("portfolio_resume_url") || personalDetails.resumePath;
+  });
+
+  const [resumeDownloadUrl, setResumeDownloadUrl] = useState(() => {
+    return localStorage.getItem("portfolio_resume_download_url") || "";
   });
 
   const [categories, setCategories] = useState<{ key: string; label: string }[]>(() => {
@@ -75,8 +97,20 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [skills]);
 
   useEffect(() => {
+    localStorage.setItem("portfolio_achievements", JSON.stringify(achievements));
+  }, [achievements]);
+
+  useEffect(() => {
     localStorage.setItem("portfolio_video_url", videoUrl);
   }, [videoUrl]);
+
+  useEffect(() => {
+    localStorage.setItem("portfolio_resume_url", resumeUrl);
+  }, [resumeUrl]);
+
+  useEffect(() => {
+    localStorage.setItem("portfolio_resume_download_url", resumeDownloadUrl);
+  }, [resumeDownloadUrl]);
 
   useEffect(() => {
     localStorage.setItem("portfolio_categories", JSON.stringify(categories));
@@ -112,6 +146,18 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setSkills((prev) => prev.filter(s => s.name !== name));
   };
 
+  const addAchievement = (achievement: Achievement) => {
+    setAchievements((prev) => [achievement, ...prev]);
+  };
+
+  const deleteAchievement = (id: string) => {
+    setAchievements((prev) => prev.filter(a => a.id !== id));
+  };
+
+  const updateAchievement = (updatedAchievement: Achievement) => {
+    setAchievements((prev) => prev.map(a => a.id === updatedAchievement.id ? updatedAchievement : a));
+  };
+
   const updateVideoUrl = (url: string) => {
     // Convert watch URL to embed URL if needed
     let finalUrl = url;
@@ -121,6 +167,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       finalUrl = url.replace("youtu.be/", "youtube.com/embed/");
     }
     setVideoUrl(finalUrl);
+  };
+
+  const updateResumeLinks = (url: string, downloadUrl: string) => {
+    setResumeUrl(url);
+    setResumeDownloadUrl(downloadUrl);
   };
 
   const addCategory = (category: { key: string; label: string }) => {
@@ -134,7 +185,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     <PortfolioContext.Provider value={{ 
       projects, 
       skills, 
+      achievements,
       videoUrl, 
+      resumeUrl,
+      resumeDownloadUrl,
       showVideo, 
       categories,
       addProject, 
@@ -142,7 +196,11 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       updateProject,
       addSkill, 
       deleteSkill, 
+      addAchievement,
+      deleteAchievement,
+      updateAchievement,
       updateVideoUrl,
+      updateResumeLinks,
       setShowVideo,
       addCategory,
       accentColor,

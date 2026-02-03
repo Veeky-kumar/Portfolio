@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { personalDetails } from "@/data/portfolioData";
+import { usePortfolio } from "@/data/PortfolioContext";
 import profilePhoto from "@/assets/profile-photo.png";
 import Typewriter from "@/components/ui/Typewriter";
 
@@ -56,6 +57,7 @@ const Particle = ({ mouseX, mouseY }: { mouseX: any; mouseY: any }) => {
 const HeroSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
+  const { resumeUrl, resumeDownloadUrl } = usePortfolio();
   
   const yScroll = useTransform(scrollY, [0, 500], [0, 200]);
   const opacityScroll = useTransform(scrollY, [0, 300], [1, 0]);
@@ -198,7 +200,12 @@ const HeroSection = () => {
                 </a>
               </Button>
               <Button size="lg" variant="outline" className="rounded-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary px-8" asChild>
-                <a href={personalDetails.resumePath} download="VeekyKumar_Resume.pdf">
+                <a 
+                  href={resumeDownloadUrl || resumeUrl} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  download="VeekyKumar_Resume.pdf"
+                >
                   Download Resume
                 </a>
               </Button>
