@@ -6,9 +6,21 @@ import {
   initialProjects, 
   initialSkills, 
   initialAchievements,
-  personalDetails,
+  personalDetails, 
   skillCategories
 } from "./portfolioData";
+import { db } from "@/lib/firebase";
+import { 
+  collection, 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc,
+  query,
+  collectionGroup
+} from "firebase/firestore";
 
 interface PortfolioContextType {
   projects: Project[];
@@ -47,138 +59,147 @@ export const accentColors = [
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem("portfolio_projects");
-    return saved ? JSON.parse(saved) : initialProjects;
-  });
-
-  const [skills, setSkills] = useState<Skill[]>(() => {
-    const saved = localStorage.getItem("portfolio_skills");
-    return saved ? JSON.parse(saved) : initialSkills;
-  });
-
-  const [achievements, setAchievements] = useState<Achievement[]>(() => {
-    const saved = localStorage.getItem("portfolio_achievements");
-    return saved ? JSON.parse(saved) : initialAchievements;
-  });
-
-  const [videoUrl, setVideoUrl] = useState(() => {
-    return localStorage.getItem("portfolio_video_url") || personalDetails.videoIntroUrl;
-  });
-
-  const [resumeUrl, setResumeUrl] = useState(() => {
-    return localStorage.getItem("portfolio_resume_url") || personalDetails.resumePath;
-  });
-
-  const [resumeDownloadUrl, setResumeDownloadUrl] = useState(() => {
-    return localStorage.getItem("portfolio_resume_download_url") || "";
-  });
-
-  const [categories, setCategories] = useState<{ key: string; label: string }[]>(() => {
-    const saved = localStorage.getItem("portfolio_categories");
-    return saved ? JSON.parse(saved) : Array.from(skillCategories);
-  });
-
-  const [showVideo, setShowVideo] = useState(() => {
-    const saved = localStorage.getItem("portfolio_show_video");
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-
-  const [accentColor, setAccentColor] = useState(() => {
-    return localStorage.getItem("portfolio_accent_color") || "17 100% 55%";
-  });
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [skills, setSkills] = useState<Skill[]>(initialSkills);
+  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
+  const [videoUrl, setVideoUrl] = useState(personalDetails.videoIntroUrl);
+  const [resumeUrl, setResumeUrl] = useState(personalDetails.resumePath);
+  const [resumeDownloadUrl, setResumeDownloadUrl] = useState("");
+  const [categories, setCategories] = useState<{ key: string; label: string }[]>(Array.from(skillCategories));
+  const [showVideo, setShowVideo] = useState(true);
+  const [accentColor, setAccentColor] = useState("17 100% 55%");
 
   useEffect(() => {
-    localStorage.setItem("portfolio_projects", JSON.stringify(projects));
-  }, [projects]);
+    // 1. Sync Settings (Video, Resume, Accent)
+    const settingsDoc = doc(db, "settings", "global");
+    const unsubSettings = onSnapshot(settingsDoc, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.videoUrl) setVideoUrl(data.videoUrl);
+        if (data.resumeUrl) setResumeUrl(data.resumeUrl);
+        if (data.resumeDownloadUrl) setResumeDownloadUrl(data.resumeDownloadUrl);
+        if (data.accentColor) {
+          setAccentColor(data.accentColor);
+          document.documentElement.style.setProperty('--primary', data.accentColor);
+        }
+        if (data.showVideo !== undefined) setShowVideo(data.showVideo);
+      } else {
+        // Initialize if not exists
+        setDoc(settingsDoc, {
+          videoUrl: personalDetails.videoIntroUrl,
+          resumeUrl: personalDetails.resumePath,
+          resumeDownloadUrl: "",
+          accentColor: "17 100% 55%",
+          showVideo: true
+        });
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_skills", JSON.stringify(skills));
-  }, [skills]);
+    // 2. Sync Projects
+    const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
+      if (!snapshot.empty) {
+        setProjects(snapshot.docs.map(d => d.data() as Project));
+      } else {
+        // Migration: Upload initial data if empty
+        initialProjects.forEach(p => setDoc(doc(db, "projects", p.id), p));
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_achievements", JSON.stringify(achievements));
-  }, [achievements]);
+    // 3. Sync Skills
+    const unsubSkills = onSnapshot(collection(db, "skills"), (snapshot) => {
+      if (!snapshot.empty) {
+        setSkills(snapshot.docs.map(d => d.data() as Skill));
+      } else {
+        initialSkills.forEach(s => setDoc(doc(db, "skills", s.name), s));
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_video_url", videoUrl);
-  }, [videoUrl]);
+    // 4. Sync Achievements
+    const unsubAchievements = onSnapshot(collection(db, "achievements"), (snapshot) => {
+      if (!snapshot.empty) {
+        setAchievements(snapshot.docs.map(d => d.data() as Achievement));
+      } else {
+        initialAchievements.forEach(a => setDoc(doc(db, "achievements", a.id), a));
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_resume_url", resumeUrl);
-  }, [resumeUrl]);
+    // 5. Sync Categories
+    const unsubCategories = onSnapshot(collection(db, "categories"), (snapshot) => {
+      if (!snapshot.empty) {
+        setCategories(snapshot.docs.map(d => d.data() as { key: string; label: string }));
+      } else {
+        skillCategories.forEach(c => setDoc(doc(db, "categories", c.key), c));
+      }
+    });
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_resume_download_url", resumeDownloadUrl);
-  }, [resumeDownloadUrl]);
+    return () => {
+      unsubSettings();
+      unsubProjects();
+      unsubSkills();
+      unsubAchievements();
+      unsubCategories();
+    };
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem("portfolio_categories", JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem("portfolio_show_video", JSON.stringify(showVideo));
-  }, [showVideo]);
-
-  useEffect(() => {
-    localStorage.setItem("portfolio_accent_color", accentColor);
-    document.documentElement.style.setProperty('--primary', accentColor);
-  }, [accentColor]);
-
-  const addProject = (project: Project) => {
-    setProjects((prev) => [project, ...prev]);
+  const addProject = async (project: Project) => {
+    await setDoc(doc(db, "projects", project.id), project);
   };
 
-  const deleteProject = (id: string) => {
-    setProjects((prev) => prev.filter(p => p.id !== id));
+  const deleteProject = async (id: string) => {
+    await deleteDoc(doc(db, "projects", id));
   };
 
-  const updateProject = (updatedProject: Project) => {
-    setProjects((prev) => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+  const updateProject = async (updatedProject: Project) => {
+    await setDoc(doc(db, "projects", updatedProject.id), updatedProject);
   };
 
-  const addSkill = (skill: Skill) => {
-    // Prevent duplicates
-    setSkills((prev) => prev.some(s => s.name === skill.name) ? prev : [...prev, skill]);
+  const addSkill = async (skill: Skill) => {
+    await setDoc(doc(db, "skills", skill.name), skill);
   };
 
-  const deleteSkill = (name: string) => {
-    setSkills((prev) => prev.filter(s => s.name !== name));
+  const deleteSkill = async (name: string) => {
+    await deleteDoc(doc(db, "skills", name));
   };
 
-  const addAchievement = (achievement: Achievement) => {
-    setAchievements((prev) => [achievement, ...prev]);
+  const addAchievement = async (achievement: Achievement) => {
+    await setDoc(doc(db, "achievements", achievement.id), achievement);
   };
 
-  const deleteAchievement = (id: string) => {
-    setAchievements((prev) => prev.filter(a => a.id !== id));
+  const deleteAchievement = async (id: string) => {
+    await deleteDoc(doc(db, "achievements", id));
   };
 
-  const updateAchievement = (updatedAchievement: Achievement) => {
-    setAchievements((prev) => prev.map(a => a.id === updatedAchievement.id ? updatedAchievement : a));
+  const updateAchievement = async (updatedAchievement: Achievement) => {
+    await setDoc(doc(db, "achievements", updatedAchievement.id), updatedAchievement);
   };
 
-  const updateVideoUrl = (url: string) => {
-    // Convert watch URL to embed URL if needed
+  const updateVideoUrl = async (url: string) => {
     let finalUrl = url;
     if (url.includes("watch?v=")) {
       finalUrl = url.replace("watch?v=", "embed/");
     } else if (url.includes("youtu.be/")) {
       finalUrl = url.replace("youtu.be/", "youtube.com/embed/");
     }
-    setVideoUrl(finalUrl);
+    await updateDoc(doc(db, "settings", "global"), { videoUrl: finalUrl });
   };
 
-  const updateResumeLinks = (url: string, downloadUrl: string) => {
-    setResumeUrl(url);
-    setResumeDownloadUrl(downloadUrl);
-  };
-
-  const addCategory = (category: { key: string; label: string }) => {
-    setCategories(prev => {
-      if (prev.some(c => c.key === category.key)) return prev;
-      return [...prev, category];
+  const updateResumeLinks = async (url: string, downloadUrl: string) => {
+    await updateDoc(doc(db, "settings", "global"), { 
+      resumeUrl: url, 
+      resumeDownloadUrl: downloadUrl 
     });
+  };
+
+  const addCategory = async (category: { key: string; label: string }) => {
+    await setDoc(doc(db, "categories", category.key), category);
+  };
+
+  const updateAccentColor = async (color: string) => {
+    await updateDoc(doc(db, "settings", "global"), { accentColor: color });
+  };
+
+  const updateShowVideo = async (show: boolean) => {
+    await updateDoc(doc(db, "settings", "global"), { showVideo: show });
   };
 
   return (
@@ -201,10 +222,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       updateAchievement,
       updateVideoUrl,
       updateResumeLinks,
-      setShowVideo,
+      setShowVideo: updateShowVideo,
       addCategory,
       accentColor,
-      setAccentColor,
+      setAccentColor: updateAccentColor,
       currentAccentHex: () => accentColors.find(c => c.value === accentColor)?.hex || "ff5722"
     }}>
       {children}
